@@ -33,6 +33,27 @@ type BlogPost struct {
 	External string
 }
 
+// GraphNode is one webring member rendered as a node in the interactive ring graph.
+type GraphNode struct {
+	Id     string `json:"id"`
+	Name   string `json:"name"`
+	Url    string `json:"url"`
+	Host   string `json:"host"`
+	Avatar string `json:"avatar,omitempty"`
+}
+
+// GraphEdge connects two members that are adjacent in the webring cycle.
+type GraphEdge struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
+}
+
+// GraphData is the full node/edge payload handed to the frontend graph viz.
+type GraphData struct {
+	Nodes []GraphNode `json:"nodes"`
+	Edges []GraphEdge `json:"edges"`
+}
+
 //go:embed webring.json
 var webringRaw []byte
 
@@ -44,6 +65,9 @@ var blogHTML []byte
 
 //go:embed post.html
 var postHTML []byte
+
+//go:embed graph.html
+var graphHTML []byte
 
 //go:embed posts/*.md
 var postsFS embed.FS
@@ -102,10 +126,61 @@ func buildCards(entries []WebringEntry) string {
 	return b.String()
 }
 
-func renderIndex(founders, members []WebringEntry) []byte {
+// buildGraphData turns the webring, in its on-disk order, into a cycle graph:
+// each entry connects to the entry before and after it, wrapping around at
+// the ends. This mirrors the same ordering /redirect uses for prev/next.
+func buildGraphData(entries []WebringEntry) GraphData {
+	nodes := make([]GraphNode, len(entries))
+	for i, e := range entries {
+		avatar := ""
+		if e.Gh != "" {
+			avatar = "https://avatars.githubusercontent.com/" + e.Gh + "?size=96"
+		}
+		nodes[i] = GraphNode{
+			Id:     fmt.Sprintf("n%d", i),
+			Name:   e.Name,
+			Url:    e.Url,
+			Host:   host(e.Url),
+			Avatar: avatar,
+		}
+	}
+
+	if len(entries) == 0 {
+		return GraphData{Nodes: nodes, Edges: []GraphEdge{}}
+	}
+
+	edges := make([]GraphEdge, len(entries))
+	for i := range entries {
+		next := (i + 1) % len(entries)
+		edges[i] = GraphEdge{Source: fmt.Sprintf("n%d", i), Target: fmt.Sprintf("n%d", next)}
+	}
+
+	return GraphData{Nodes: nodes, Edges: edges}
+}
+
+func renderIndex(webring, founders, members []WebringEntry) []byte {
 	out := strings.Replace(string(indexHTML), "<!--FOUNDERS-->", buildCards(founders), 1)
 	out = strings.Replace(out, "<!--MEMBERS-->", buildCards(members), 1)
 	out = strings.Replace(out, "<!--COUNT-->", fmt.Sprintf("%d members", len(founders)+len(members)), 1)
+	out = strings.Replace(out, "<!--RING-COUNT-->", fmt.Sprintf("%d", len(webring)), 1)
+	return []byte(out)
+}
+
+// renderGraph builds the standalone /graph page: a bigger version of the
+// interactive ring, with the full node/edge payload embedded for Cytoscape.
+func renderGraph(webring []WebringEntry) []byte {
+	out := strings.Replace(string(graphHTML), "<!--RING-COUNT-->", fmt.Sprintf("%d", len(webring)), 1)
+
+	graphJSON, err := json.Marshal(buildGraphData(webring))
+	if err != nil {
+		slog.Error("failed to marshal graph data", "error", err)
+		graphJSON = []byte(`{"nodes":[],"edges":[]}`)
+	}
+	// Escape "</" so the JSON payload can't prematurely close the <script>
+	// tag it's embedded in (e.g. a url containing "</script").
+	safeGraphJSON := strings.ReplaceAll(string(graphJSON), "</", "<\\/")
+	out = strings.Replace(out, "<!--GRAPH-DATA-->", safeGraphJSON, 1)
+
 	return []byte(out)
 }
 
@@ -205,7 +280,8 @@ func main() {
 		}
 	}
 
-	page := renderIndex(founders, members)
+	page := renderIndex(webring, founders, members)
+	graphPage := renderGraph(webring)
 
 	md := goldmark.New()
 
@@ -281,6 +357,11 @@ func main() {
 
 	http.HandleFunc("/webring", func(w http.ResponseWriter, r *http.Request) {
 		buildJsonResponse(w, http.StatusOK, webring)
+	})
+
+	http.HandleFunc("/graph", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(graphPage)
 	})
 
 	http.HandleFunc("/redirect", func(w http.ResponseWriter, r *http.Request) {
