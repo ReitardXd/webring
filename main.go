@@ -35,11 +35,12 @@ type BlogPost struct {
 
 // GraphNode is one webring member rendered as a node in the interactive ring graph.
 type GraphNode struct {
-	Id     string `json:"id"`
-	Name   string `json:"name"`
-	Url    string `json:"url"`
-	Host   string `json:"host"`
-	Avatar string `json:"avatar,omitempty"`
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	Url     string `json:"url"`
+	Host    string `json:"host"`
+	Avatar  string `json:"avatar,omitempty"`
+	Founder bool   `json:"founder,omitempty"`
 }
 
 // GraphEdge connects two members that are adjacent in the webring cycle.
@@ -137,11 +138,12 @@ func buildGraphData(entries []WebringEntry) GraphData {
 			avatar = "https://avatars.githubusercontent.com/" + e.Gh + "?size=96"
 		}
 		nodes[i] = GraphNode{
-			Id:     fmt.Sprintf("n%d", i),
-			Name:   e.Name,
-			Url:    e.Url,
-			Host:   host(e.Url),
-			Avatar: avatar,
+			Id:      fmt.Sprintf("n%d", i),
+			Name:    e.Name,
+			Url:     e.Url,
+			Host:    host(e.Url),
+			Avatar:  avatar,
+			Founder: founderNames[e.Name],
 		}
 	}
 

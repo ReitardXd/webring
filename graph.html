@@ -11,10 +11,9 @@
         document.documentElement.dataset.theme = saved || (prefersDark ? "dark" : "light");
       })();
     </script>
-    <title>threadlocked · webring</title>
+    <title>graph · threadlocked</title>
     <style>
       :root {
-        /* rosé pine dawn (light) */
         --base: #faf4ed;
         --surface: #fffaf3;
         --overlay: #f2e9e1;
@@ -34,7 +33,6 @@
         --secondary: var(--subtle);
       }
       :root[data-theme="dark"] {
-        /* rosé pine (dark) */
         --base: #191724;
         --surface: #1f1d2e;
         --overlay: #26233a;
@@ -52,29 +50,16 @@
 
       * { box-sizing: border-box; }
 
-      ::-webkit-scrollbar-track {
-          background: 0 0;
-      }
-
+      ::-webkit-scrollbar-track { background: 0 0; }
       ::-webkit-scrollbar-thumb {
-          background: var(--tertiary);
-          border: 5px solid var(--theme);
-          border-radius: var(--radius);
+        background: var(--tertiary);
+        border: 5px solid var(--theme);
+        border-radius: var(--radius);
       }
-
-      ::-webkit-scrollbar-thumb:hover {
-          background: var(--secondary);
-      }
-
-      ::-webkit-scrollbar:not(.highlighttable, .highlight table, .gist .highlight) {
-          background: var(--theme);
-      }
-
+      ::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
+      ::-webkit-scrollbar:not(.highlighttable, .highlight table, .gist .highlight) { background: var(--theme); }
       @media screen and (min-width: 768px) {
-          ::-webkit-scrollbar {
-              width: 19px;
-              height: 11px;
-          }
+        ::-webkit-scrollbar { width: 19px; height: 11px; }
       }
 
       body {
@@ -88,9 +73,12 @@
       }
 
       main {
-        max-width: 1180px;
+        max-width: 1440px;
         margin: 0 auto;
-        padding: 4rem 1.5rem 6rem;
+        padding: 3rem 1.5rem 4rem;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
       }
 
       header {
@@ -98,7 +86,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 1rem;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
       }
 
       h1 {
@@ -108,14 +96,15 @@
         letter-spacing: -0.02em;
       }
       h1 .ring { color: var(--iris); }
+      .parent-title { color: inherit; text-decoration: none; }
+      .parent-title:hover { color: var(--iris); }
+      .sep { color: var(--muted); margin: 0 0.2em; }
+      .current-page { color: var(--foam); }
 
-      .desc { margin: 0; color: var(--subtle); font-size: 1rem; }
+      .desc { margin: 0; color: var(--subtle); font-size: 0.95rem; }
       .desc .count { color: var(--foam); }
-      .desc a { color: var(--foam); text-decoration: none; }
-      .desc a:hover { text-decoration: underline; }
 
       .actions { flex: none; display: flex; gap: 0.5rem; }
-
       .icon-btn {
         appearance: none;
         display: grid;
@@ -133,135 +122,85 @@
       .icon-btn:hover { border-color: var(--iris); color: var(--iris); }
       .icon-btn svg { width: 1.15rem; height: 1.15rem; display: block; }
 
-      .controls { margin-bottom: 1.5rem; }
-
-      #search {
-        width: 100%;
+      .graph-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      #graph-search {
+        flex: 1;
         appearance: none;
         background: var(--surface);
         color: var(--text);
         border: 3px solid var(--overlay);
         border-radius: 0;
-        padding: 0.8rem 1rem;
+        padding: 0.75rem 1rem;
         font: inherit;
-        font-size: 1.05rem;
-        margin-bottom: 0.9rem;
+        font-size: 1rem;
         transition: border-color 0.18s ease;
       }
-      #search:focus { outline: none; border-color: var(--iris); }
-      #search::placeholder { color: var(--muted); }
-
-      .empty { color: var(--muted); font-size: 0.9rem; }
-
-      .section-label {
-        margin: 0 0 0.75rem;
+      #graph-search:focus { outline: none; border-color: var(--iris); }
+      #graph-search::placeholder { color: var(--muted); }
+      .graph-search-hint {
+        flex: none;
         color: var(--muted);
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-      }
-      .founders-section {
-        margin-bottom: 2rem;
-        padding-bottom: 2rem;
-        border-bottom: 1px solid var(--overlay);
+        font-size: 0.8rem;
+        white-space: nowrap;
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 0.9rem;
-      }
-      .card[hidden] { display: none; }
-
-      .card {
+      .ring-graph {
         position: relative;
-        display: flex;
-        flex-direction: column;
-        padding: 1.15rem;
-        min-height: 200px;
+        flex: 1;
+        width: 100%;
+        min-height: 520px;
         border: 3px solid var(--overlay);
         border-radius: var(--radius);
         background: var(--surface);
         overflow: hidden;
-        transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+        cursor: grab;
       }
-      .card:hover {
-        border-color: var(--iris);
-        background: var(--highlight);
-        transform: translateY(-2px);
-      }
-      .card:hover .name { color: var(--foam); }
-      .card:hover .arrow { opacity: 1; transform: none; }
-
-      .card-link {
-        text-decoration: none;
-        color: var(--text);
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-
-      .gh-link {
-        margin-top: auto;
-        width: fit-content;
-        color: var(--muted);
-        transition: color 0.18s ease;
-      }
-      .gh-link:hover { color: var(--iris); }
-      .gh-link svg { display: block; }
-
-      .avatar {
-        position: relative;
-        width: 3rem;
-        height: 3rem;
-        display: grid;
-        place-items: center;
-        border-radius: 0;
-        background: var(--overlay);
-        color: var(--iris);
-        font-size: 1.2rem;
-        font-weight: 600;
-        overflow: hidden;
-      }
-      .avatar img {
-        position: absolute;
-        inset: 0;
-        width: 100%;
+      .ring-graph:active { cursor: grabbing; }
+      .ring-graph-fallback {
+        display: none;
+        align-items: center;
+        justify-content: center;
         height: 100%;
-        object-fit: contain;
-        padding: 4px;
-        background: var(--overlay);
-      }
-      .avatar img[data-failed] { display: none; }
-
-      .meta { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-      .name {
-        font-weight: 500;
-        font-size: 1.05rem;
-        transition: color 0.18s ease;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      .host {
         color: var(--muted);
         font-size: 0.85rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        text-align: center;
+        padding: 1rem;
       }
-      .arrow {
+      .ring-graph.no-js .ring-graph-fallback { display: flex; }
+
+      .graph-tooltip {
         position: absolute;
-        top: 1rem;
-        right: 1rem;
-        color: var(--iris);
+        left: 0;
+        top: 0;
+        pointer-events: none;
+        background: var(--overlay);
+        color: var(--text);
+        border: 1px solid var(--muted);
+        border-radius: var(--radius);
+        padding: 0.3rem 0.6rem;
+        font-size: 0.78rem;
+        white-space: nowrap;
+        transform: translate(-50%, -135%);
         opacity: 0;
-        transform: translateX(-4px);
-        transition: opacity 0.18s ease, transform 0.18s ease;
+        transition: opacity 0.12s ease;
+        z-index: 20;
+      }
+      .graph-tooltip.visible { opacity: 1; }
+
+      .graph-reset {
+        position: absolute;
+        right: 0.75rem;
+        top: 0.75rem;
+        z-index: 10;
       }
 
       footer {
-        margin-top: 3rem;
+        margin-top: 2rem;
         padding-top: 1.5rem;
         border-top: 1px solid var(--overlay);
         color: var(--muted);
@@ -270,24 +209,338 @@
       }
       footer a { color: var(--pine); text-decoration: none; }
       footer a:hover { text-decoration: underline; }
-      .badges { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 0.6rem; }
-      .badge-credit { color: var(--muted); font-size: 0.75rem; margin-top: 0.8rem; }
 
-      @media (max-width: 1024px) {
-        .grid { grid-template-columns: repeat(5, 1fr); }
-      }
-      @media (max-width: 720px) {
-        .grid { grid-template-columns: repeat(3, 1fr); }
-      }
       @media (max-width: 480px) {
-        main { padding: 2.5rem 1rem 4rem; }
-        .grid { grid-template-columns: repeat(2, 1fr); gap: 0.65rem; }
+        main { padding: 2rem 1rem 3rem; }
         h1 { font-size: 1.5rem; }
+        .ring-graph { min-height: 380px; }
+        .graph-controls { flex-wrap: wrap; }
+        .graph-search-hint { display: none; }
       }
     </style>
   </head>
-  <body> 
-  <main> 
-    <header> 
-      <div> 
-        </div></header></main></body>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1><a href="/" class="parent-title">thread<span class="ring">locked</span></a><span class="sep">/</span><span class="current-page">graph</span></h1>
+          <p class="desc">the webring as a network. <span class="count" id="ring-graph-count"><!--RING-COUNT--></span> connected sites.</p>
+        </div>
+        <div class="actions">
+          <a class="icon-btn" href="/" aria-label="Back to webring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </a>
+          <button id="toggle" class="icon-btn" type="button" aria-label="Toggle theme"></button>
+        </div>
+      </header>
+
+      <div class="graph-controls">
+        <input
+          id="graph-search"
+          type="search"
+          placeholder="search a name to zoom in…"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Search the ring by name"
+        />
+        <span class="graph-search-hint">drag · scroll to zoom · click a node to visit</span>
+      </div>
+
+      <div id="ring-graph" class="ring-graph">
+        <button class="icon-btn graph-reset" id="graph-reset" type="button" aria-label="Reset view" title="Reset view">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+        </button>
+        <div class="ring-graph-fallback">graph unavailable — enable javascript to explore the ring.</div>
+      </div>
+
+      <footer>
+        <a href="/">back to webring</a>
+      </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js"></script>
+    <script>
+      // server-rendered ring graph data, see buildGraphData() in main.go
+      window.__RING_GRAPH__ = <!--GRAPH-DATA-->;
+    </script>
+    <script>
+      (function () {
+        // ---- theme toggle ----
+        var root = document.documentElement;
+        var btn = document.getElementById("toggle");
+        var icons = {
+          dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+          light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+        };
+
+        function apply(theme) {
+          root.dataset.theme = theme;
+          btn.innerHTML = icons[theme];
+          try { localStorage.setItem("theme", theme); } catch (e) {}
+        }
+
+        apply(root.dataset.theme || "light");
+
+        btn.addEventListener("click", function () {
+          apply(root.dataset.theme === "dark" ? "light" : "dark");
+          if (window.__reThemeGraph) window.__reThemeGraph();
+        });
+      })();
+
+      // ---- interactive ring graph ----
+      (function () {
+        var container = document.getElementById("ring-graph");
+        var data = window.__RING_GRAPH__;
+
+        if (!container || typeof cytoscape === "undefined" || !data || !data.nodes || !data.nodes.length) {
+          if (container) container.classList.add("no-js");
+          return;
+        }
+
+        function cssVar(name) {
+          return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        var elements = data.nodes
+          .map(function (n) {
+            return {
+              group: "nodes",
+              data: { id: n.id, name: n.name, url: n.url, host: n.host, avatar: n.avatar || "", founder: !!n.founder },
+            };
+          })
+          .concat(
+            data.edges.map(function (e, i) {
+              return { group: "edges", data: { id: "e" + i, source: e.source, target: e.target } };
+            })
+          );
+
+        function buildStyle() {
+          return [
+            {
+              selector: "node",
+              style: {
+                width: 38,
+                height: 38,
+                shape: "ellipse",
+                "background-color": cssVar("--overlay"),
+                "background-image": function (ele) {
+                  return ele.data("avatar") || "none";
+                },
+                "background-fit": "cover",
+                "background-clip": "node",
+                "border-width": 2,
+                "border-color": cssVar("--subtle"),
+                label: "data(name)",
+                color: cssVar("--text"),
+                "font-size": 11,
+                "font-family": "ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace",
+                "text-valign": "bottom",
+                "text-halign": "center",
+                "text-margin-y": 7,
+                "text-outline-width": 2,
+                "text-outline-color": cssVar("--base"),
+                "text-outline-opacity": 0.85,
+                "transition-property": "border-color, border-width, width, height, opacity",
+                "transition-duration": 120,
+              },
+            },
+            {
+              selector: "node.founder",
+              style: {
+                "border-color": cssVar("--pine"),
+                "border-width": 3,
+                color: cssVar("--pine"),
+              },
+            },
+            {
+              selector: "node.hovered",
+              style: {
+                "border-color": cssVar("--iris"),
+                "border-width": 3,
+                width: 48,
+                height: 48,
+                color: cssVar("--iris"),
+                "z-index": 999,
+              },
+            },
+            {
+              selector: "node.search-match",
+              style: {
+                "border-color": cssVar("--foam"),
+                "border-width": 3,
+                color: cssVar("--foam"),
+                "z-index": 900,
+              },
+            },
+            {
+              selector: "node.search-dim, edge.search-dim",
+              style: { opacity: 0.12 },
+            },
+            {
+              selector: "edge",
+              style: {
+                width: 1.4,
+                "line-color": cssVar("--subtle"),
+                "curve-style": "haystack",
+                "haystack-radius": 0,
+                opacity: 0.45,
+              },
+            },
+            {
+              selector: "edge.highlighted",
+              style: {
+                "line-color": cssVar("--foam"),
+                width: 2.5,
+                opacity: 1,
+              },
+            },
+          ];
+        }
+
+        var cy = cytoscape({
+          container: container,
+          elements: elements,
+          style: buildStyle(),
+          layout: {
+            name: "circle",
+            fit: true,
+            padding: 60,
+            avoidOverlap: true,
+            startAngle: (3 / 2) * Math.PI,
+            clockwise: true,
+          },
+          minZoom: 0.25,
+          maxZoom: 4,
+          wheelSensitivity: 0.25,
+          boxSelectionEnabled: false,
+          autounselectify: true,
+        });
+
+        cy.nodes().forEach(function (n) {
+          if (n.data("founder")) n.addClass("founder");
+        });
+
+        window.__reThemeGraph = function () {
+          cy.style(buildStyle()).update();
+        };
+
+        var tooltip = document.createElement("div");
+        tooltip.className = "graph-tooltip";
+        container.appendChild(tooltip);
+
+        function positionTooltip(node) {
+          var pos = node.renderedPosition();
+          tooltip.style.left = pos.x + "px";
+          tooltip.style.top = pos.y + "px";
+        }
+
+        cy.on("mouseover", "node", function (evt) {
+          var node = evt.target;
+          node.addClass("hovered");
+          node.connectedEdges().addClass("highlighted");
+          tooltip.textContent = node.data("host");
+          positionTooltip(node);
+          tooltip.classList.add("visible");
+          container.style.cursor = "pointer";
+        });
+
+        cy.on("mouseout", "node", function (evt) {
+          var node = evt.target;
+          node.removeClass("hovered");
+          node.connectedEdges().removeClass("highlighted");
+          tooltip.classList.remove("visible");
+          container.style.cursor = "grab";
+        });
+
+        cy.on("drag", "node", function (evt) {
+          if (tooltip.classList.contains("visible")) positionTooltip(evt.target);
+        });
+
+        cy.on("position", "node", function (evt) {
+          if (tooltip.classList.contains("visible") && evt.target.hasClass("hovered")) {
+            positionTooltip(evt.target);
+          }
+        });
+
+        cy.on("tap", "node", function (evt) {
+          var url = evt.target.data("url");
+          if (url) window.open(url, "_blank", "noopener");
+        });
+
+        // ---- reset view ----
+        var resetBtn = document.getElementById("graph-reset");
+        function resetView() {
+          cy.elements().removeClass("search-dim search-match");
+          cy.animate({ fit: { eles: cy.elements(), padding: 60 }, duration: 350, easing: "ease-out" });
+        }
+        resetBtn.addEventListener("click", resetView);
+
+        // ---- search-to-zoom ----
+        var searchInput = document.getElementById("graph-search");
+        var fuse =
+          typeof Fuse !== "undefined"
+            ? new Fuse(data.nodes, { keys: ["name"], threshold: 0.35, ignoreLocation: true })
+            : null;
+        var debounceTimer = null;
+
+        function runSearch() {
+          var q = searchInput.value.trim();
+          cy.elements().removeClass("search-dim search-match");
+
+          if (!q) {
+            resetView();
+            return;
+          }
+
+          var results;
+          if (fuse) {
+            results = fuse.search(q).map(function (r) { return r.item; });
+          } else {
+            var lq = q.toLowerCase();
+            results = data.nodes.filter(function (n) {
+              return n.name.toLowerCase().indexOf(lq) !== -1;
+            });
+          }
+
+          if (!results.length) {
+            cy.elements().addClass("search-dim");
+            return;
+          }
+
+          var matchIds = results.map(function (r) { return r.id; });
+          var matched = cy.nodes().filter(function (n) {
+            return matchIds.indexOf(n.data("id")) !== -1;
+          });
+
+          cy.elements().addClass("search-dim");
+          matched.removeClass("search-dim").addClass("search-match");
+          matched.connectedEdges().removeClass("search-dim");
+
+          // zoom to the best match (first result, ranked by Fuse)
+          cy.animate({
+            fit: { eles: matched[0], padding: 180 },
+            duration: 450,
+            easing: "ease-out",
+          });
+        }
+
+        searchInput.addEventListener("input", function () {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(runSearch, 180);
+        });
+
+        searchInput.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") {
+            searchInput.value = "";
+            resetView();
+            searchInput.blur();
+          } else if (e.key === "Enter") {
+            clearTimeout(debounceTimer);
+            runSearch();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
