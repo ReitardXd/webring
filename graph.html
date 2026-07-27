@@ -480,7 +480,7 @@
         var searchInput = document.getElementById("graph-search");
         var fuse =
           typeof Fuse !== "undefined"
-            ? new Fuse(data.nodes, { keys: ["name"], threshold: 0.35, ignoreLocation: true })
+            ? new Fuse(data.nodes, { keys: ["name"], threshold: 0.1, ignoreLocation: true })
             : null;
         var debounceTimer = null;
 

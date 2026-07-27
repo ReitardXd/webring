@@ -94,6 +94,21 @@ func host(raw string) string {
 
 var founderNames = map[string]bool{"datavorous": true, "nisarga": true}
 
+func validateWebring(entries []WebringEntry) error {
+	seen := make(map[string]bool, len(entries))
+	for _, e := range entries {
+		key := strings.ToLower(strings.TrimSpace(e.Name))
+		if key == "" {
+			return fmt.Errorf("webring entry has empty name (url=%s)", e.Url)
+		}
+		if seen[key] {
+			return fmt.Errorf("duplicate webring entry name: %q", e.Name)
+		}
+		seen[key] = true
+	}
+	return nil
+}
+
 func buildCards(entries []WebringEntry) string {
 	var b strings.Builder
 	for _, e := range entries {
@@ -270,6 +285,10 @@ func main() {
 	var webring []WebringEntry
 	if err := json.Unmarshal(webringRaw, &webring); err != nil {
 		slog.Error("failed to unmarshal webring json file", "error", err)
+		os.Exit(1)
+	}
+	if err := validateWebring(webring); err != nil {
+		slog.Error("invalid webring.json", "error", err)
 		os.Exit(1)
 	}
 
